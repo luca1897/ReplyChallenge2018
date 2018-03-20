@@ -8,6 +8,8 @@ import com.pokik.challenge.model.ProviderRegion;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -43,7 +45,6 @@ public class Solver {
                 try {
                     provider.setNumRegions(scanner.nextInt());
                 } catch (Exception e) {
-                    "ciaone".charAt(0);
                 }
 
                 for (int j = 0; j < provider.getNumRegions(); j++) {
@@ -94,7 +95,6 @@ public class Solver {
     }
 
     private void assignPackagesToProject(Project project) {
-        System.out.println(data.getProjects().indexOf(project));
         boolean projectCantBeCovered = false;
 
         while (!projectCantBeCovered) {
@@ -104,15 +104,19 @@ public class Solver {
             }
 
             while (!project.isServiceCovered(bestServiceToCover)) {
-                double minPrice = Double.MAX_VALUE;
+                double bestRate = Double.MAX_VALUE;
                 ProviderRegion bestRegion = null;
 
                 for (Provider provider : data.getProviders()) {
                     for (ProviderRegion providerRegion : provider.getProviderRegions()) {
                         if (providerRegion.getAvailableUnitsForService(bestServiceToCover)*providerRegion.getNumAvaiablesPackages() > 0) {
                             double price = providerRegion.getPackageCost();
-                            if (price < minPrice) {
-                                minPrice = price;
+                            double latency = providerRegion.getLatencyForCountry().get(data.getCountries().indexOf(project.getCountryName()));
+                            double totaken = project.fakeResourcesForService(providerRegion,bestServiceToCover);
+                            double rate = ((project.getServicesUnitNeeded().get(bestServiceToCover) / (totaken*providerRegion.getNumAvaiablesUnitForService().get(bestServiceToCover))) * (price*totaken)) * (latency * totaken);
+
+                            if (rate < bestRate) {
+                                bestRate = rate;
                                 bestRegion = providerRegion;
                             }
                         }
@@ -139,8 +143,12 @@ public class Solver {
 
     public void printSolution() throws FileNotFoundException {
         PrintStream printStream = new PrintStream(new File(filenameOutput));
-
+        Long sumPen = 0L;
         for (Project project: data.getProjects()) {
+
+            if(project.getTakenResources().isEmpty())
+                sumPen += project.getPenalty();
+
             project.mergeProviders();
 
             boolean firstProvider = true;
@@ -156,8 +164,8 @@ public class Solver {
             }
             printStream.println();
         }
-
         printStream.flush();
         printStream.close();
+        System.out.println(filenameOutput + " " + sumPen);
     }
 }

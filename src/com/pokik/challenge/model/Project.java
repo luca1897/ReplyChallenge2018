@@ -117,6 +117,15 @@ public class Project {
         getTakenResources().add(takenResource);
     }
 
+    public int fakeResourcesForService(ProviderRegion region, int serviceIndex) {
+        int neededUnitsForService = servicesUnitNeeded.get(serviceIndex);
+
+        int regionAvailabilityForService = region.getAvailableUnitsForService(serviceIndex);
+        int totalUnitsTaken = Integer.min(regionAvailabilityForService*region.getNumAvaiablesPackages(), (int)(Math.ceil((float)neededUnitsForService/(float)regionAvailabilityForService)*regionAvailabilityForService));
+        int takenPackages = totalUnitsTaken/regionAvailabilityForService;
+        return takenPackages;
+    }
+
     public void mergeProviders() {
         ArrayList<ProviderRegionTakenResource> finalTakenResources = new ArrayList<>();
         for (ProviderRegionTakenResource r: getTakenResources()) {
@@ -136,4 +145,5 @@ public class Project {
 
         takenResources = finalTakenResources;
     }
+
 }
